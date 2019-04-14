@@ -282,7 +282,7 @@ static void msm_restart_prepare(const char *cmd)
 #ifdef CONFIG_MSM_PRESERVE_MEM
 	bool need_warm_reset = true;
 #else
-	bool need_warm_reset = false;
+	bool need_warm_reset = true;
 #endif
 #ifdef CONFIG_QCOM_DLOAD_MODE
 	/* Write download mode flags if we're panic'ing
