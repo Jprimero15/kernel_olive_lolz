@@ -3,6 +3,7 @@
  * Android IPC Subsystem
  *
  * Copyright (C) 2007-2017 Google, Inc.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -664,7 +665,15 @@ int binder_alloc_mmap_handler(struct binder_alloc *alloc,
 		goto err_already_mapped;
 	}
 
-	alloc->buffer = (void __user *)vma->vm_start;
+	area = get_vm_area(vma->vm_end - vma->vm_start, VM_ALLOC);
+	if (area == NULL) {
+		ret = -ENOMEM;
+		failure_string = "get_vm_area";
+		goto err_get_vm_area_failed;
+	}
+	alloc->buffer = area->addr;
+	alloc->user_buffer_offset =
+		vma->vm_start - (uintptr_t)alloc->buffer;
 	mutex_unlock(&binder_alloc_mmap_lock);
 
 	alloc->pages = kzalloc(sizeof(alloc->pages[0]) *
