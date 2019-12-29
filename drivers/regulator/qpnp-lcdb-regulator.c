@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -613,7 +614,11 @@ static int qpnp_lcdb_ttw_enter(struct qpnp_lcdb *lcdb)
 	if (rc < 0)
 		return rc;
 
+#ifdef PROJECT_PINE
 	val = 0;
+#else
+	val = 2;
+#endif
 	rc = qpnp_lcdb_write(lcdb, lcdb->base + LCDB_PWRUP_PWRDN_CTL_REG,
 			     &val, 1);
 	if (rc < 0)
@@ -1348,6 +1353,11 @@ static int qpnp_lcdb_ldo_regulator_enable(struct regulator_dev *rdev)
 	return rc;
 }
 
+#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE)
+extern bool ilitek_gesture_flag;
+extern bool nvt_gesture_flag;
+#endif
+
 static int qpnp_lcdb_ldo_regulator_disable(struct regulator_dev *rdev)
 {
 	int rc = 0;
@@ -1357,7 +1367,12 @@ static int qpnp_lcdb_ldo_regulator_disable(struct regulator_dev *rdev)
 		return 0;
 
 	mutex_lock(&lcdb->lcdb_mutex);
+#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE)
+	if ((ilitek_gesture_flag != true) && (nvt_gesture_flag != true))
+		rc = qpnp_lcdb_disable(lcdb);
+#else
 	rc = qpnp_lcdb_disable(lcdb);
+#endif
 	if (rc < 0)
 		pr_err("Failed to disable lcdb rc=%d\n", rc);
 	mutex_unlock(&lcdb->lcdb_mutex);
@@ -1445,7 +1460,12 @@ static int qpnp_lcdb_ncp_regulator_disable(struct regulator_dev *rdev)
 		return 0;
 
 	mutex_lock(&lcdb->lcdb_mutex);
+#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE)
+	if ((ilitek_gesture_flag != true) && (nvt_gesture_flag != true))
+		rc = qpnp_lcdb_disable(lcdb);
+#else
 	rc = qpnp_lcdb_disable(lcdb);
+#endif
 	if (rc < 0)
 		pr_err("Failed to disable lcdb rc=%d\n", rc);
 	mutex_unlock(&lcdb->lcdb_mutex);
@@ -2399,3 +2419,4 @@ module_exit(qpnp_lcdb_regulator_exit);
 
 MODULE_DESCRIPTION("QPNP LCDB regulator driver");
 MODULE_LICENSE("GPL v2");
+
