@@ -404,7 +404,7 @@ static int boot_reason_proc_show(struct seq_file *file, void *data)
 {
 	char temp[40] = {0};
 
-	snprintf(temp, SNPRINTF_MAXLEN, "%d\n", boot_into_factory);
+	snprintf(temp, sizeof(temp), "%d\n", boot_into_factory);
 	seq_printf(file, "%s\n", temp);
 	return 0;
 }
