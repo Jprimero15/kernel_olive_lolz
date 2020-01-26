@@ -307,8 +307,7 @@ static void dwc3_frame_length_adjustment(struct dwc3 *dwc)
 
 	reg = dwc3_readl(dwc->regs, DWC3_GFLADJ);
 	dft = reg & DWC3_GFLADJ_30MHZ_MASK;
-	if (!dev_WARN_ONCE(dwc->dev, dft == dwc->fladj,
-	    "request value same as default, ignoring\n")) {
+	if (dft != dwc->fladj) {
 		reg &= ~DWC3_GFLADJ_30MHZ_MASK;
 		reg |= DWC3_GFLADJ_30MHZ_SDBND_SEL | dwc->fladj;
 		dwc3_writel(dwc->regs, DWC3_GFLADJ, reg);
@@ -1318,6 +1317,28 @@ static int dwc3_probe(struct platform_device *pdev)
 	pm_runtime_set_active(dev);
 	pm_runtime_enable(dev);
 	pm_runtime_forbid(dev);
+
+    /*	ret = dwc3_alloc_event_buffers(dwc, DWC3_EVENT_BUFFERS_SIZE);
+	if (ret) {
+		dev_err(dwc->dev, "failed to allocate event buffers\n");
+		ret = -ENOMEM;
+		goto err2;
+	}
+
+	ret = dwc3_get_dr_mode(dwc);
+	if (ret)
+		goto err3;
+
+	ret = dwc3_alloc_scratch_buffers(dwc);
+	if (ret)
+		goto err3;
+
+	ret = dwc3_core_init(dwc);
+	if (ret) {
+		if (ret != -EPROBE_DEFER)
+			dev_err(dev, "failed to initialize core: %d\n", ret);
+		goto err4;
+	} */
 
 	/* Check the maximum_speed parameter */
 	switch (dwc->maximum_speed) {

@@ -274,6 +274,8 @@ next:
 			clear_cold_data(page);
 		}
 		f2fs_clear_page_private(page);
+		/*set_page_private(page, 0);
+		ClearPagePrivate(page);*/
 		f2fs_put_page(page, 1);
 
 		list_del(&cur->list);
@@ -3431,11 +3433,6 @@ static int read_compacted_summaries(struct f2fs_sb_info *sbi)
 		seg_i = CURSEG_I(sbi, i);
 		segno = le32_to_cpu(ckpt->cur_data_segno[i]);
 		blk_off = le16_to_cpu(ckpt->cur_data_blkoff[i]);
-		if (blk_off > ENTRIES_IN_SUM) {
-			f2fs_bug_on(sbi, 1);
-			f2fs_put_page(page, 1);
-			return -EFAULT;
-		}
 		seg_i->next_segno = segno;
 		reset_curseg(sbi, i, 0);
 		seg_i->alloc_type = ckpt->alloc_type[i];
@@ -4305,6 +4302,13 @@ out:
 				 i, curseg->segno, curseg->alloc_type,
 				 curseg->next_blkoff, blkofs);
 			return -EFSCORRUPTED;
+			/*f2fs_msg(sbi->sb, KERN_ERR,
+				"Current segment's next free block offset is "
+				"inconsistent with bitmap, logtype:%u, "
+				"segno:%u, type:%u, next_blkoff:%u, blkofs:%u",
+				i, curseg->segno, curseg->alloc_type,
+				curseg->next_blkoff, blkofs);
+			return -EINVAL;*/
 		}
 	}
 	return 0;
