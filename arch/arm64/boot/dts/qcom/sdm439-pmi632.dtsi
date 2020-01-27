@@ -55,7 +55,7 @@
 	quiet_therm {
 		quiet_therm_default: quiet_therm_default {
 			pins = "gpio3";
-                        bias-disable
+                        bias-disable;
 			bias-high-impedance;
 		};
 	};
