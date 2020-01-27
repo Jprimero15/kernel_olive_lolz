@@ -67,13 +67,6 @@ enum flat_binder_object_flags {
 	 */
 	FLAT_BINDER_FLAG_ACCEPTS_FDS = 0x100,
 	/**
-	 * @FLAT_BINDER_FLAG_TXN_SECURITY_CTX: request security contexts
-	 *
-	 * Only when set, causes senders to include their security
-	 * context
-	 */
-	FLAT_BINDER_FLAG_TXN_SECURITY_CTX = 0x1000,
-	/**
 	 * @FLAT_BINDER_FLAG_SCHED_POLICY_MASK: bit-mask for scheduling policy
 	 *
 	 * These two bits can be used to set the min scheduling policy at which
@@ -345,8 +338,8 @@ struct binder_transaction_data_secctx {
 	struct binder_transaction_data transaction_data;
 	binder_uintptr_t secctx;
 };
-#endif /* __KERNEL__ */
 
+#endif /* __KERNEL__ */
 struct binder_transaction_data_sg {
 	struct binder_transaction_data transaction_data;
 	binder_size_t buffers_size;
