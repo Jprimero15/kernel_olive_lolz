@@ -309,7 +309,8 @@ static int fb_notifier_cb(struct notifier_block *nb,
 			       unsigned long action, void *data)
 {
 	struct boost_drv *b = container_of(nb, typeof(*b), fb_notif);
-	int *blank = ((struct fb_event *)data)->data;
+	struct fb_event *evdata = data;
+	int *blank = evdata->data;
 
 	/* Parse framebuffer blank events as soon as they occur */
 	if (action != FB_EARLY_EVENT_BLANK)
