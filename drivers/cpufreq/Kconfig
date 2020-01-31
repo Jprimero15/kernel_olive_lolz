@@ -378,26 +378,6 @@ config MAX_BOOST_FREQ_PERF
 	help
 	  Max-boost frequency for the performance CPU cluster.
 
-config FRAME_STUNE_BOOST
-	int "SchedTune frame boost value for top-app"
-	depends on DYNAMIC_STUNE_BOOST
-	default "0"
-	help
-	  SchedTune value for frame boosts. This alters the perceived
-	  load in order to bias CPU and frequency selection.
-
-config FRAME_BOOST_FREQ_LP
-	int "Low-power cluster frame boost freq"
-	default "0"
-	help
-	  Frame boost frequency for the low-power CPU cluster.
-
-config FRAME_BOOST_FREQ_PERF
-	int "Performance cluster frame boost freq"
-	default "0"
-	help
-	  Frame boost frequency for the performance CPU cluster.
-
 config IDLE_MIN_FREQ_LP
 	int "Low-power cluster idle frequency"
 	default "0"
