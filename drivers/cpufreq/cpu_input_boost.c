@@ -27,10 +27,6 @@ static unsigned int max_boost_freq_lp __read_mostly =
 	CONFIG_MAX_BOOST_FREQ_LP;
 static unsigned int max_boost_freq_hp __read_mostly =
 	CONFIG_MAX_BOOST_FREQ_PERF;
-static unsigned int frame_boost_freq_lp __read_mostly =
-	CONFIG_FRAME_BOOST_FREQ_LP;
-static unsigned int frame_boost_freq_hp __read_mostly =
-	CONFIG_FRAME_BOOST_FREQ_PERF;
 static unsigned int idle_min_freq_lp __read_mostly =
 	CONFIG_IDLE_MIN_FREQ_LP;
 static unsigned int remove_input_boost_freq_lp __read_mostly =
@@ -47,8 +43,6 @@ module_param(input_boost_freq_lp, uint, 0644);
 module_param(input_boost_freq_hp, uint, 0644);
 module_param(max_boost_freq_lp, uint, 0644);
 module_param(max_boost_freq_hp, uint, 0644);
-module_param(frame_boost_freq_lp, uint, 0644);
-module_param(frame_boost_freq_hp, uint, 0644);
 module_param(idle_min_freq_lp, uint, 0644);
 module_param(remove_input_boost_freq_lp, uint, 0644);
 module_param(remove_input_boost_freq_perf, uint, 0644);
@@ -59,29 +53,24 @@ module_param(wake_boost_duration, short, 0644);
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
 static __read_mostly int input_stune_boost = CONFIG_INPUT_STUNE_BOOST;
 static __read_mostly int max_stune_boost = CONFIG_MAX_STUNE_BOOST;
-static __read_mostly int frame_stune_boost = CONFIG_FRAME_STUNE_BOOST;
 
 module_param_named(dynamic_stune_boost, input_stune_boost, int, 0644);
 module_param(max_stune_boost, int, 0644);
-module_param(frame_stune_boost, int, 0644);
 #endif
 
 /* Available bits for boost state */
 enum {
 	SCREEN_OFF,
 	INPUT_BOOST,
-	MAX_BOOST,
-	FRAME_BOOST
+	MAX_BOOST
 };
 
 struct boost_drv {
 	struct delayed_work input_unboost;
-	struct delayed_work frame_unboost;
 	struct delayed_work max_unboost;
 	struct notifier_block cpu_notif;
 	struct notifier_block msm_drm_notif;
 	wait_queue_head_t boost_waitq;
-	atomic_long_t frame_boost_expires;
 	atomic_long_t max_boost_expires;
 	unsigned long state;
 	unsigned long last_input_jiffies;
@@ -90,21 +79,16 @@ struct boost_drv {
 	int input_stune_slot;
 	bool max_stune_active;
 	int max_stune_slot;
-	bool frame_stune_active;
-	int frame_stune_slot;
 };
 
 static void input_unboost_worker(struct work_struct *work);
 static void max_unboost_worker(struct work_struct *work);
-static void frame_unboost_worker(struct work_struct *work);
 
 static struct boost_drv boost_drv_g __read_mostly = {
 	.input_unboost = __DELAYED_WORK_INITIALIZER(boost_drv_g.input_unboost,
 						    input_unboost_worker, 0),
 	.max_unboost = __DELAYED_WORK_INITIALIZER(boost_drv_g.max_unboost,
 						  max_unboost_worker, 0),
-	.frame_unboost = __DELAYED_WORK_INITIALIZER(boost_drv_g.frame_unboost,
-						    frame_unboost_worker, 0),
 	.boost_waitq = __WAIT_QUEUE_HEAD_INITIALIZER(boost_drv_g.boost_waitq)
 };
 
@@ -128,18 +112,6 @@ static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
 		freq = max_boost_freq_lp;
 	else
 		freq = max_boost_freq_hp;
-
-	return min(freq, policy->max);
-}
-
-static unsigned int get_frame_boost_freq(struct cpufreq_policy *policy)
-{
-	unsigned int freq;
-
-	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = frame_boost_freq_lp;
-	else
-		freq = frame_boost_freq_hp;
 
 	return min(freq, policy->max);
 }
@@ -173,14 +145,6 @@ static void update_online_cpu_policy(void)
 	put_online_cpus();
 }
 
-bool should_kick_frame_boost(unsigned long timeout_ms)
-{
-	struct boost_drv *b = &boost_drv_g;
-
-	return time_before(jiffies, b->last_input_jiffies +
-			   msecs_to_jiffies(timeout_ms));
-}
-
 static void update_stune_boost(int *slot, bool *active, int value)
 {
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
@@ -198,9 +162,6 @@ static void clear_stune_boost(struct boost_drv *b)
 	if (b->max_stune_active)
 		b->max_stune_active = reset_stune_boost("top-app",
 							b->max_stune_slot);
-	if (b->frame_stune_active)
-		b->frame_stune_active = reset_stune_boost("top-app",
-							  b->frame_stune_slot);
 #endif
 }
 
@@ -257,38 +218,6 @@ void cpu_input_boost_kick_max(unsigned int duration_ms)
 	__cpu_input_boost_kick_max(b, duration_ms);
 }
 
-static void __cpu_input_boost_kick_frame(struct boost_drv *b,
-				       unsigned int duration_ms)
-{
-	unsigned long boost_jiffies = msecs_to_jiffies(duration_ms);
-	unsigned long curr_expires, new_expires;
-
-	if (test_bit(SCREEN_OFF, &b->state))
-		return;
-
-	do {
-		curr_expires = atomic_long_read(&b->frame_boost_expires);
-		new_expires = jiffies + boost_jiffies;
-
-		/* Skip this boost if there's a longer boost in effect */
-		if (time_after(curr_expires, new_expires))
-			return;
-	} while (atomic_long_cmpxchg(&b->frame_boost_expires, curr_expires,
-				     new_expires) != curr_expires);
-
-	set_bit(FRAME_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->frame_unboost,
-			      boost_jiffies))
-		wake_up(&b->boost_waitq);
-}
-
-void cpu_input_boost_kick_frame(unsigned int duration_ms)
-{
-	struct boost_drv *b = &boost_drv_g;
-
-	__cpu_input_boost_kick_frame(b, duration_ms);
-}
-
 static void input_unboost_worker(struct work_struct *work)
 {
 	struct boost_drv *b = container_of(to_delayed_work(work),
@@ -304,15 +233,6 @@ static void max_unboost_worker(struct work_struct *work)
 					   typeof(*b), max_unboost);
 
 	clear_bit(MAX_BOOST, &b->state);
-	wake_up(&b->boost_waitq);
-}
-
-static void frame_unboost_worker(struct work_struct *work)
-{
-	struct boost_drv *b = container_of(to_delayed_work(work),
-					   typeof(*b), frame_unboost);
-
-	clear_bit(FRAME_BOOST, &b->state);
 	wake_up(&b->boost_waitq);
 }
 
@@ -378,11 +298,6 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 		clear_stune_boost(b);
 		update_stune_boost(&b->input_stune_slot,
 				   &b->input_stune_active, input_stune_boost);
-	} else if (test_bit(FRAME_BOOST, &b->state)) {
-		policy->min = get_frame_boost_freq(policy);
-		clear_stune_boost(b);
-		update_stune_boost(&b->frame_stune_slot,
-				   &b->frame_stune_active, frame_stune_boost);
 	} else {
 		policy->min = get_min_freq(policy);
 		clear_stune_boost(b);
