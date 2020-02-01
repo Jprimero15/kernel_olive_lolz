@@ -36,7 +36,7 @@
 #include <linux/cpu_pm.h>
 #include <linux/cpuhotplug.h>
 #include <linux/workqueue.h>
-#include <linux/msm_drm_notify.h>
+#include <linux/fb.h>
 #include <soc/qcom/pm.h>
 #include <soc/qcom/event_timer.h>
 #include <soc/qcom/lpm_levels.h>
@@ -75,7 +75,7 @@ module_param(cluster_use_deepest_state, bool, 0664);
 static uint32_t bias_hyst;
 module_param_named(bias_hyst, bias_hyst, uint, 0664);
 
-static bool cluster_deepest_state_auto __read_mostly = false;
+static bool cluster_deepest_state_auto __read_mostly = true;
 module_param_named(cluster_deepest_state_auto, cluster_deepest_state_auto, bool,  0644);
 
 static short cluster_deepest_state_auto_timeout __read_mostly = 3000;
@@ -1711,32 +1711,32 @@ static int lpm_suspend_enter(suspend_state_t state)
 	return 0;
 }
 
-static int msm_drm_notifier_callback(struct notifier_block *self, unsigned long event, void *data)
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data)
 {
-	struct msm_drm_notifier *evdata = data;
+	struct fb_event *evdata = data;
 	int *blank;
 
-	if (event != MSM_DRM_EVENT_BLANK)
-		return 0;
-
-	if (evdata->id != MSM_DRM_PRIMARY_DISPLAY)
-		return 0;
+	if ((event == FB_EVENT_BLANK) && evdata && evdata->data) {
+		blank = evdata->data;
 
 	if (evdata && evdata->data) {
 		blank = evdata->data;
 		switch (*blank) {
-		case MSM_DRM_BLANK_POWERDOWN:
+		case FB_BLANK_POWERDOWN:
 			screen_on = false;
 			break;
-		case MSM_DRM_BLANK_UNBLANK:
+		case FB_BLANK_UNBLANK:
 			screen_on = true;
-			// Disable deepest state immidiately after unblank
+			// Disable deepest state immediately after unblank
 			if (cluster_deepest_state_auto)
 				cluster_use_deepest_state = false;
 			break;
 		}
 	}
 
+	return 0;
+}
 	if (cluster_deepest_state_auto && !delayed_work_busy(&enforce_deepest_state_work) && !screen_on)
 		queue_delayed_work(enforce_deepest_state_wq, &enforce_deepest_state_work,
 			msecs_to_jiffies(cluster_deepest_state_auto_timeout));
@@ -1745,7 +1745,7 @@ static int msm_drm_notifier_callback(struct notifier_block *self, unsigned long 
 }
 
 static struct notifier_block deepest_state_notifier_block = {
-	.notifier_call = msm_drm_notifier_callback,
+	.notifier_call = fb_notifier_callback,
 };
 
 static void set_deepest_state(struct work_struct *work)
@@ -1885,7 +1885,7 @@ static int  __init scheduled_cluster_deepest_state_init(void)
 
 	INIT_DELAYED_WORK(&enforce_deepest_state_work, set_deepest_state);
 
-	msm_drm_register_client(&deepest_state_notifier_block);
+	fb_register_client(&deepest_state_notifier_block);
 
 	return 0;
 }
