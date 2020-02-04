@@ -1,2 +1,5 @@
 header-y += if_pppolac.h
 header-y += if_pppopns.h
+header-y += msm_audio_calibration.h
+header-y += msm_audio.h
+header-y += msm_audio_qcp.h

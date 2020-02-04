@@ -1,0 +1,2 @@
+header-y += voice_params.h
+header-y += msmcal-hwdep.h
