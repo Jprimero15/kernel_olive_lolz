@@ -1660,11 +1660,11 @@ TRACE_EVENT(sched_find_best_target,
 
 	TP_PROTO(struct task_struct *tsk, bool prefer_idle,
 		unsigned long min_util, int start_cpu,
-		int best_idle, int best_active, int most_spare_cap, int target,
-		int backup_cpu),
+		int best_idle_cpu, int best_active_cpu, int most_spare_cap_cpu,
+		int target_cpu, int backup_cpu),
 
 	TP_ARGS(tsk, prefer_idle, min_util, start_cpu,
-		best_idle, best_active, target, backup_cpu),
+		best_idle_cpu, best_active_cpu, most_spare_cap_cpu, target_cpu, backup_cpu),
 
 	TP_STRUCT__entry(
 		__array( char,	comm,	TASK_COMM_LEN	)
@@ -1672,33 +1672,33 @@ TRACE_EVENT(sched_find_best_target,
 		__field( unsigned long,	min_util	)
 		__field( bool,	prefer_idle		)
 		__field( int,	start_cpu		)
-		__field( int,	best_idle		)
-		__field( int,	best_active		)
-		__field( int,	most_spare_cap		)
-		__field( int,	target			)
+		__field( int,	best_idle_cpu		)
+		__field( int,	best_active_cpu		)
+		__field( int,	most_spare_cap_cpu	)
+		__field( int,	target_cpu		)
 		__field( int,	backup_cpu		)
 	),
 
 	TP_fast_assign(
 		memcpy(__entry->comm, tsk->comm, TASK_COMM_LEN);
-		__entry->pid		= tsk->pid;
-		__entry->min_util	= min_util;
-		__entry->prefer_idle	= prefer_idle;
-		__entry->start_cpu 	= start_cpu;
-		__entry->best_idle	= best_idle;
-		__entry->best_active	= best_active;
-		__entry->most_spare_cap	= most_spare_cap;
-		__entry->target		= target;
-		__entry->backup_cpu	= backup_cpu;
+		__entry->pid			= tsk->pid;
+		__entry->min_util		= min_util;
+		__entry->prefer_idle		= prefer_idle;
+		__entry->start_cpu 		= start_cpu;
+		__entry->best_idle_cpu		= best_idle_cpu;
+		__entry->best_active_cpu	= best_active_cpu;
+		__entry->most_spare_cap_cpu	= most_spare_cap_cpu;
+		__entry->target_cpu		= target_cpu;
+		__entry->backup_cpu		= backup_cpu;
 	),
 
 	TP_printk("pid=%d comm=%s prefer_idle=%d start_cpu=%d "
-		  "best_idle=%d best_active=%d most_spare_cap=%d target=%d backup=%d",
+		  "best_idle_cpu=%d best_active_cpu=%d most_spare_cap_cpu=%d target_cpu=%d backup_cpu=%d",
 		__entry->pid, __entry->comm,
 		__entry->prefer_idle, __entry->start_cpu,
-		__entry->best_idle, __entry->best_active,
-		__entry->most_spare_cap,
-		__entry->target,
+		__entry->best_idle_cpu, __entry->best_active_cpu,
+		__entry->most_spare_cap_cpu,
+		__entry->target_cpu,
 		__entry->backup_cpu)
 );
 
