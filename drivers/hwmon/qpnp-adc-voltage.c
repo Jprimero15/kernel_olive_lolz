@@ -366,7 +366,7 @@ static int32_t qpnp_vadc_status_debug(struct qpnp_vadc_chip *vadc)
 }
 
 static int qpnp_vadc_hc_check_conversion_status(struct qpnp_vadc_chip *vadc,
-     bool poll)
+		bool poll)
 {
 	int rc = 0, count = 0, retry;
 	u8 status1 = 0;
