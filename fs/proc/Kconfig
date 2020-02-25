@@ -88,3 +88,10 @@ config PROC_UID
 	depends on PROC_FS && RT_MUTEXES
 	help
 	Provides aggregated per-uid information under /proc/uid.
+
+config TIKTOK_BLOCKER
+	bool "Block Tiktokers from using this kernel"
+        default y
+	help
+	  Provides a successful and safe way to block your kernel from being used by
+          gay tiktokers out there. and so that your gf will stop using your phone.
