@@ -68,7 +68,6 @@ struct ipv6_devconf {
 	__s32		keep_addr_on_down;
 	__s32		accept_ra_prefix_route;
 	__u32		addr_gen_mode;
->>>>>>> a4101a800ebb79414b1a8f7df8166a0718ec1c84
 
 	struct ctl_table_header *sysctl_header;
 };
