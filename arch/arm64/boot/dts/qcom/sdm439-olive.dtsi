@@ -264,15 +264,6 @@
 		reg = <0x0 0x9ff00000 0x0 0x00100000>;
 	};
 		
-        ramoops: ramoops@9ff00000 {
-                compatible = "ramoops";
-                reg = <0x0 0x9ff00000 0x0 0x00100000>;
-                record-size = <0x1000>;
-                console-size = <0x80000>;
-                ftrace-size = <0x1000>;
-                pmsg-size = <0x8000>;
-                ecc-size = <0x0>;
-        };
 };
 
 &modem_mem {

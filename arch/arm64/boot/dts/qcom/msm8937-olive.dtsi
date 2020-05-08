@@ -126,7 +126,6 @@
 			reusable;
 			size = <0x400000>;
 		};
-
 	};
 
 	aliases {
