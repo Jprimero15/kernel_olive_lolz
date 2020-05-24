@@ -852,3 +852,8 @@ config VMAP_STACK
 	  that is incorrect if the stack is in vmalloc space.
 
 source "kernel/gcov/Kconfig"
+
+config PRODUCT_OLIVE
+	bool "OLIVE target Product"
+	help
+	  This option enables support target product
