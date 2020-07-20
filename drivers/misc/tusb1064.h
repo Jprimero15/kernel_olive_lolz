@@ -1,5 +1,4 @@
-/*
- * Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -11,18 +10,9 @@
  * GNU General Public License for more details.
  */
 
-/dts-v1/;
+#ifndef __TUSB1064_H_
+#define __TUSB1064_H_
 
-#include "msm8953.dtsi"
-#include "pmi8950.dtsi"
-#include "msm8953-qrd-sku3.dtsi"
-#include "msm8953-pmi8950.dtsi"
+void tusb1064_usb_event(bool flip);
 
-/ {
-	model = "Qualcomm Technologies, Inc. MSM8953 + PMI8950 QRD SKU3";
-	compatible = "qcom,msm8953-qrd-sku3",
-		   "qcom,msm8953-qrd", "qcom,msm8953", "qcom,qrd";
-	qcom,board-id= <0x2000b 0>;
-	qcom,pmic-id = <0x010016 0x010011 0x0 0x0>;
-};
-
+#endif /* __TUSB1064_H_ */
